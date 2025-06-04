@@ -1,5 +1,6 @@
 package com.tt.ai.chat_to_deepseek.controller;
 
+import com.tt.ai.chat_to_deepseek.domain.ChatResDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +30,11 @@ public class ChatToDeepSeekController {
     }
 
     @GetMapping("/chat")
-    public ResponseEntity<String> chat(@RequestParam String message) {
+    public ChatResDTO chat(@RequestParam String message) {
         String content = chatClient.prompt().user(message).call().content();
 
         System.out.println(">>> 问题：" + message);
         System.out.println(">>> 回答：" + content);
-        return null;
+        return new ChatResDTO(content);
     }
 }
