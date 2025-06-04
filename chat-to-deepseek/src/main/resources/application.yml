@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: chat-to-deepseek
+  ai:
+    deepseek:
+      # API基础地址
+      base-url: https://api.deepseek.com
+      # 必需：在DeepSeek控制台申请的API密钥
+      api-key: sk-2eba7512573549cc8e1080eed73af580
+      # 聊天模型配置
+#        chat:
+#          enabled: true
+#          options:
+#            model: deepseek-chat  # 使用deepseek-chat模型
+#            temperature: 0.8  # 生成随机性控制（0.0-1.0，值越高越随机）
+#            max-tokens: 512  # 单次生成最大Token数
+#            top-p: 0.9  # Nucleus采样参数（0.0-1.0，控制生成词汇的概率分布）
+#            frequency-penalty: 0.0  # 频率惩罚（-2.0到2.0）
+#            presence-penalty: 0.0  # 存在惩罚（-2.0到2.0）
+#            stop: [ "###", "END" ]  # 生成停止序列
+#
+#        # 重试配置
+#        retry:
+#          max-attempts: 3  # 最大重试次数
+#          backoff:
+#            initial-interval: 2s  # 初始重试间隔
+#            multiplier: 2  # 重试间隔倍数
+#            max-interval: 10s  # 最大重试间隔
+#          on-client-errors: false  # 是否对4xx错误重试
+
+# 应用服务器配置
+server:
+  port: 8081  # 服务端口
+  servlet:
+    context-path: /  # 上下文路径
+    encoding:
+      charset: UTF-8  # 字符编码
+      force: true  # 强制编码
