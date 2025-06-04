@@ -3,12 +3,14 @@ package com.tt.ai.chat_to_deepseek.controller;
 import com.tt.ai.chat_to_deepseek.domain.ChatResDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 /**
  * 与deepSeek聊天
@@ -33,8 +35,20 @@ public class ChatToDeepSeekController {
     public ChatResDTO chat(@RequestParam String message) {
         String content = chatClient.prompt().user(message).call().content();
 
-        System.out.println(">>> 问题：" + message);
-        System.out.println(">>> 回答：" + content);
+        log.info(">>> 普通输出...");
+        log.info(">>> 问题：{}", message);
+        log.info(">>> 回答：{}", content);
         return new ChatResDTO(content);
+    }
+
+    @GetMapping("/chat_stream")
+    public Flux<Message> chatStream(@RequestParam String message) {
+        Flux<ChatResponse> chatResponseFlux = chatClient.prompt().user(message).stream().chatResponse();
+
+        log.info(">>> 流式输出...");
+        log.info(">>> 问题：{}", message);
+
+        Flux<Message> returnMessages = chatResponseFlux.map(chat -> chat.getResult().getOutput());
+        return returnMessages;
     }
 }

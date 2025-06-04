@@ -53,46 +53,135 @@
     </div>
     <div class="input-area">
         <textarea id="messageInput" rows="3"></textarea>
+        <div class="chat-input" style="padding: 5px 1rem;color: #e85656;">
+            <label>
+                <input type="checkbox" id="message-stream" checked="true">
+                流式输出
+            </label>
+        </div>
         <button onclick="sendMessage()">发送</button>
     </div>
 </div>
 
 <script>
-    function addMessage(content, isSent) {
-        const messagesDiv = document.getElementById('messages');
+
+    const chatMessages = document.getElementById('messages');
+    let aiMessageElement = null;
+    let messageElementContent = null;
+
+    // 聊天记录自动滚动
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addSentMessage(content) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = 'message ' + (isSent ? 'sent' : 'received');
+        messageDiv.className = 'message sent';
         messageDiv.textContent = content;
-        messagesDiv.appendChild(messageDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    function addReceivedMessage(content) {
+        if (!aiMessageElement) {
+            aiMessageElement = document.createElement('div');
+            aiMessageElement.className = 'message received';
+            chatMessages.appendChild(aiMessageElement);
+        }
+
+        console.log("content:", content);
+
+        aiMessageElement.innerHTML = content;
     }
 
     function sendMessage() {
         const input = document.getElementById('messageInput');
         const message = input.value.trim();
-
+        aiMessageElement = null;
+        messageElementContent= '';
         if (message) {
-            // 显示发送的消息
-            addMessage(message, true);
 
-            // 发送请求到后端
-            fetch('/ai/deepSeek/chat?message=' + encodeURIComponent(message), {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // 显示后端响应
-                addMessage(data.message, false);
-            })
-            .catch(error => {
-                addMessage('错误: ' + error, false);
-            });
+            // 获得 checkbox 的 message-stream 的值
+            const messageStream = document.getElementById('message-stream').checked;
+
+            // 显示发送的消息
+            addSentMessage(message);
+
+            if (messageStream) {
+                // 构建API URL
+                const apiUrl = new URL('/ai/deepSeek/chat_stream', window.location.origin);
+                apiUrl.searchParams.append('message', message);
+                // 创建EventSource连接
+                const eventSource = new EventSource(apiUrl);
+
+                eventSource.onmessage = (event) => {
+                    try {
+
+                        const data = JSON.parse(event.data);
+                        //console.log('stream api data:', data)
+                        processStreamMessage(data);
+
+                        // 处理结束
+                        const finishReason = data.metadata?.finishReason;
+                        if (finishReason === 'STOP') {
+                            eventSource.close();
+                        }
+
+                    } catch (error) {
+                        console.error('解析错误:', error);
+                        eventSource.close();
+
+                        // 移除思考中指示器(如果存在)
+                        addReceivedMessage(`解析错误: ${error || '未知错误'}`);
+                    }
+                };
+
+                eventSource.onerror = (error) => {
+                    console.error('连接错误:', error);
+                    eventSource.close();
+
+                    // 移除思考中指示器(如果存在)
+                    addReceivedMessage('对话连接异常，请重试');
+                };
+            } else {
+                // 发送请求到后端
+                fetch('/ai/deepSeek/chat?message=' + encodeURIComponent(message), {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 显示后端响应
+                        addReceivedMessage(data.message);
+                    })
+                    .catch(error => {
+                        addReceivedMessage('错误: ' + error);
+                    });
+            }
+
 
             // 清空输入框
             input.value = '';
+        }
+    }
+
+    function processStreamMessage(data) {
+        const messageType = data.messageType || '';
+        let content = data.text || '';
+        //console.log('messageType:', messageType);
+
+        const finishReason = data.metadata?.finishReason;
+        if (finishReason === 'STOP') {
+            content += '<br/><br/><span style="color: #aaa">【内容由 chat-to-deepseek 生成...】</span>';
+        }
+
+        // 添加AI回复
+        if (content && content.length > 0) {
+            messageElementContent += content;
+            addReceivedMessage(messageElementContent);
+            scrollToBottom();
         }
     }
 
