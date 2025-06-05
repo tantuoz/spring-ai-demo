@@ -6,7 +6,7 @@ spring:
       # API基础地址
       base-url: https://api.deepseek.com
       # 必需：在DeepSeek控制台申请的API密钥
-      api-key: sk-2eba7512573549cc8e1080eed73af580
+      api-key: ${deepseek.api-key}
       # 聊天模型配置
 #        chat:
 #          enabled: true
