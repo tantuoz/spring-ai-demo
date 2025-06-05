@@ -5,6 +5,8 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>chat-to-deepseek</module>
+        <module>mcp-server-db</module>
+		<module>mcp-client</module>
 	</modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>

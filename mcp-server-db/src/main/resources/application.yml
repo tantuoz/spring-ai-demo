@@ -1,0 +1,20 @@
+server:
+  port: 8083
+
+# MCP服务端开启
+spring:
+  ai:
+    mcp:
+      server:
+        name: mcp-server-db
+        version: 1.0.0
+        type: SYNC
+        sse-endpoint: /mcp/db
+  data:
+    jdbc:
+      dialect: mysql
+  datasource:
+    url: ${mysql.datasource.url:jdbc:mysql://localhost:3306/test?useSSL=false&serverTimezone=UTC}
+    username: ${mysql.datasource.username:root}
+    password: ${mysql.datasource.password:root1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
